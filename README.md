@@ -1,6 +1,5 @@
 # cover-motor
-
-## 参考ESPhome的页面就可以进行操作了
+## 因为使用的是ESPhome直接去烧录的，所以没有自己编程。这个部分可以参考ESPhome的页面就可以进行操作
 https://esphome.io/cookbook/dual-r2-cover.html
 
 ## 步骤1
