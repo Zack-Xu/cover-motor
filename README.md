@@ -25,4 +25,4 @@ https://esphome.io/cookbook/dual-r2-cover.html
 
 1.homeassistant的官网，www.home-assistant.io
 
-2.homeassistant的网课，https://study.163.com/course/introduction/1006189053.htm
+2.homeassistant的网课，第87课，https://study.163.com/course/introduction/1006189053.htm
