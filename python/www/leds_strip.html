@@ -1,0 +1,175 @@
+<html>
+<head><link rel="stylesheet" type="text/css" href="index.css">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>灯带配置</title> </head>
+<body align='center'>
+<center><img alt="Pili Board Logo" style="width:138px; height:40px; margin-top:60px; margin-bottom:30px;" id="image_logo"></center>
+
+<div class="card">
+<label id="device_name" style="float:right;"></label>
+<div class="card2">
+<h2>灯带参数设置</h2>
+<div class="list">
+<p id="leds_strip_info"></p>
+<div style="height:1px; margin-top:-1px;clear: both;overflow:hidden;"></div>
+</div>
+
+<label>led数量</label>
+<input type="text" id="led_num" value="30" placeholder="灯带led数量"/>
+<label>数据GPIO口</label>
+<input type="text" id="data_pin" value="14" placeholder="数据GPIO口"/>
+<label>时钟GPIO口</label>
+<input type="text" id="clock_pin" value="12" placeholder="时钟GPIO口"/>
+<button type="button" onclick="set_leds_strip()">设置</button>
+</div>
+
+<div class="card2">
+<p id="reboot_info"></p>
+<button type="button" onclick="reboot()" style="background:#FF0000">重启进入正常模式</button>
+</div>
+
+<div style="height:1px; margin-top:-1px;clear: both;overflow:hidden;"></div>
+</div>
+</body>
+
+<script>
+function c_output( content ){
+    var ret = '';
+
+    for( var i in content.state_info ) {
+        for (var key in content.state_info[i]){
+            if (content.working){
+                ret = ret + '<span class="left">' + key + '</span><span class="right" style="color: #0E9D57">' + content.state_info[i][key] + '</span>';
+            }
+            else{
+                ret = ret + '<span class="left">' + key + '</span><span class="right" style="color: #ff0000">' + content.state_info[i][key] + '</span>';
+            }
+        }
+    }
+    return ret;
+}
+
+function update0( url, method ) {
+    var request = new XMLHttpRequest();
+
+    request.onreadystatechange = function () {
+        var inputform;
+        if (request.readyState === 4) {
+            if (request.status === 200) {
+                result=JSON.parse(request.responseText);
+                for (var key in result){
+                    inputform = document.getElementById(key);
+                    inputform.value = result[key];
+                }
+                return;
+            } else {
+                return;
+            }
+        } else {
+        }
+    }
+    request.open(method, url);
+    request.send();
+}
+
+
+function update( url, method, textid ) {
+    var request = new XMLHttpRequest();
+    var area = document.getElementById(textid);
+
+    request.onreadystatechange = function () {
+        if (request.readyState === 4) {
+            if (request.status === 200) {
+                result=JSON.parse(request.responseText);
+                area.innerHTML = c_output(result);
+                return;
+            } else {
+                area.innerHTML = '当前状态查询中……';
+                return;
+            }
+        } else {
+        }
+    }
+    request.open(method, url);
+    request.send();
+}
+
+function setup( url, method, data, textid, update_self, call_fun, time_relay ) {
+    var area = document.getElementById(textid);
+    var request = new XMLHttpRequest();
+
+    request.onreadystatechange = function () {
+        if (request.readyState === 4) {
+            if (request.status === 200) {
+                result=JSON.parse(request.responseText);
+                if( update_self ){
+                    area.innerHTML = c_output(result);
+                    return;
+                }
+                else{
+                    window.setTimeout(call_fun,time_relay);
+                    return;
+                }
+            } else {
+                area.innerHTML = '发送请求失败……';
+                return;
+            }
+        } else {
+        }
+    }
+    if(method=='GET'){
+        url = url + "?" + data;
+        request.open(method, url);
+        request.send();
+    }
+    else{
+        request.open(method, url);
+        request.send(data);
+    }
+    area.innerHTML = '设置中……';
+}
+
+function get_leds_strip(){
+    update0( 'get_leds_strip', 'GET' )
+}
+
+function set_leds_strip(){
+    var led_num = document.getElementById('led_num'),data_pin = document.getElementById('data_pin'), clock_pin = document.getElementById('clock_pin');
+
+    var data = 'led_num=' + led_num.value +
+               '&data_pin=' + data_pin.value +
+               '&clock_pin=' + clock_pin.value;
+    setup( 'set_leds_strip', 'POST', data, 'leds_strip_info', true );
+}
+function reboot(){
+    setup( 'reboot', 'POST', '', 'reboot_info', true );
+}
+function get_name(){
+    var name_area = document.getElementById('device_name');
+    var request = new XMLHttpRequest();
+
+    request.onreadystatechange = function () {
+        if (request.readyState === 4) {
+            if (request.status === 200) {
+                result=JSON.parse(request.responseText);
+                name_area.innerText = result['name'];
+                return;
+            }
+        }
+    }
+    request.open('GET', 'get_name');
+    request.send();
+}
+
+
+var image_logo = document.getElementById('image_logo');
+
+window.setTimeout("get_name()",1000);
+//window.setTimeout("get_leds_strip()",1500);
+
+window.setTimeout('image_logo.src ="pili_logo.png"',3000);
+
+window.setTimeout('window.document.body.style.backgroundImage = "url(config_background.png)"',7000);
+
+</script>
+</html>

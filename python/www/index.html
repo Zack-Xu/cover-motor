@@ -1,0 +1,254 @@
+<html>
+<head><link rel="stylesheet" type="text/css" href="index.css">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>PiliBoard</title> </head>
+<body align='center'>
+<center><img alt="Pili Board Logo" style="width:138px; height:40px; margin-top:60px; margin-bottom:30px;" id="image_logo"></center>
+
+<div class="card">
+<label id="device_name" style="float:right;"></label>
+<div class="card2">
+<h2><img id="image_wifi">连接WIFI路由器</h2>
+<div class="list">
+<p id="wifi_info"></p>
+<div style="height:1px; margin-top:-1px;clear: both;overflow:hidden;"></div>
+</div>
+
+<label>SSID</label>
+<input type="text" id="wifi_ssid" placeholder="ssid"/>
+<label for="pwd">密码</label>
+<input type="text" id="wifi_pwd" Placeholder="password"/>
+<button type="button" onclick="set_wifi()">连接</button>
+</div>
+
+<div class="card2">
+<h2><img id="image_mqtt">连接MQTT服务器</h2>
+<div class="list">
+<p id="mqtt_info"></p>
+<div style="height:1px; margin-top:-1px;clear: both;overflow:hidden;"></div>
+</div>
+
+<label>服务器地址</label>
+<input type="text" id="mqtt_ip" placeholder="ip or hostname"/>
+<label>服务器端口</label>
+<input type="text" id="mqtt_port" Placeholder="port"/>
+<label>用户名</label>
+<input type="text" id="mqtt_user" placeholder="username"/>
+<label>密码</label>
+<input type="text" id="mqtt_password" Placeholder="password"/>
+<button type="button" onclick="set_mqtt()">连接</button>
+</div>
+
+<div class="card2">
+<h2><img id="image_ap">设置自身AP密码</h2>
+<div class="list">
+<p id="ap_info"></p>
+<div style="height:1px; margin-top:-1px;clear: both;overflow:hidden;"></div>
+</div>
+
+<label>密码</label>
+<input type="text" id="ap_pwd" Placeholder="password"/>
+<button type="button" onclick="set_ap()">提交</button>
+</div>
+
+<div class="card2">
+<p id="reboot_info"></p>
+<button type="button" onclick="reboot()" style="background:#FF0000">重启进入正常模式</button>
+</div>
+
+<div style="height:1px; margin-top:-1px;clear: both;overflow:hidden;"></div>
+</div>
+</body>
+
+<script>
+function c_output( content ){
+    var ret = '';
+
+    for( var i in content.state_info ) {
+        for (var key in content.state_info[i]){
+            if (content.working){
+                ret = ret + '<span class="left">' + key + '</span><span class="right" style="color: #0E9D57">' + content.state_info[i][key] + '</span>';
+            }
+            else{
+                ret = ret + '<span class="left">' + key + '</span><span class="right" style="color: #ff0000">' + content.state_info[i][key] + '</span>';
+            }
+        }
+    }
+    return ret;
+}
+
+function update0( url, method ) {
+    var request = new XMLHttpRequest();
+
+    request.onreadystatechange = function () {
+        var inputform;
+        if (request.readyState === 4) {
+            if (request.status === 200) {
+                result=JSON.parse(request.responseText);
+                for (var key in result){
+                    inputform = document.getElementById(key);
+                    inputform.value = result[key];
+                }
+                return;
+            } else {
+                return;
+            }
+        } else {
+        }
+    }
+    request.open(method, url);
+    request.send();
+}
+
+
+function update( url, method, textid ) {
+    var request = new XMLHttpRequest();
+    var area = document.getElementById(textid);
+
+/*
+    var tmp = '{"working": false, "state_info": [{"当前状态": "已连接"}, {"IP": "10.0.1.108"}, {"网络掩码": "255.255.255.0"}, {"网关": "10.0.1.1"}, {"域名服务器": "202.96.209.133"}]}';
+    result=JSON.parse(tmp);
+    area.innerHTML = c_output(result);
+    return;
+*/
+    request.onreadystatechange = function () {
+        if (request.readyState === 4) {
+            if (request.status === 200) {
+                result=JSON.parse(request.responseText);
+                area.innerHTML = c_output(result);
+                return;
+            } else {
+                area.innerHTML = '当前状态查询中……';
+                return;
+            }
+        } else {
+        }
+    }
+    request.open(method, url);
+    request.send();
+}
+
+function setup( url, method, data, textid, update_self, call_fun, time_relay ) {
+    var area = document.getElementById(textid);
+    var request = new XMLHttpRequest();
+
+    request.onreadystatechange = function () {
+        if (request.readyState === 4) {
+            if (request.status === 200) {
+                result=JSON.parse(request.responseText);
+                if( update_self ){
+                    area.innerHTML = c_output(result);
+                    return;
+                }
+                else{
+                    window.setTimeout(call_fun,time_relay);
+                    return;
+                }
+            } else {
+                area.innerHTML = '发送请求失败……';
+                return;
+            }
+        } else {
+        }
+    }
+    if(method=='GET'){
+        url = url + "?" + data;
+        request.open(method, url);
+        request.send();
+    }
+    else{
+        request.open(method, url);
+        request.send(data);
+    }
+    area.innerHTML = '设置中……';
+}
+
+function get_wifi(){
+    update( 'get_wifi', 'GET', 'wifi_info')
+}
+
+function set_wifi(){
+    var wifi_ssid = document.getElementById('wifi_ssid'),wifi_pwd = document.getElementById('wifi_pwd');
+    if (!wifi_ssid.value){
+        alert("SSID不能为空！");
+        return;
+    }
+
+    var data = 'ssid='+wifi_ssid.value+'&pwd='+wifi_pwd.value;
+    setup( 'set_wifi', 'POST', data, 'wifi_info', false, 'get_wifi()', 1000 );
+}
+
+function get_mqtt(){
+    update0( 'get_mqtt', 'GET' )
+}
+
+function set_mqtt(){
+    var mqtt_ip = document.getElementById('mqtt_ip'),mqtt_port = document.getElementById('mqtt_port'), mqtt_user = document.getElementById('mqtt_user'), mqtt_password = document.getElementById('mqtt_password');
+    if (!mqtt_ip.value){
+        alert("服务器地址不能为空！");
+        return;
+    }
+
+    var data = 'mqtt_ip=' + mqtt_ip.value +
+               '&mqtt_port=' + mqtt_port.value +
+               '&mqtt_user=' + mqtt_user.value +
+               '&mqtt_password=' + mqtt_password.value;
+    setup( 'set_mqtt', 'POST', data, 'mqtt_info', true );
+}
+
+function get_ap(){
+    update( 'get_ap', 'GET', 'ap_info')
+}
+
+function set_ap(){
+    var ap_pwd = document.getElementById('ap_pwd');
+    if (ap_pwd.value.length<8){
+        alert("密码不能小于8位");
+        return;
+    }
+
+    var data = 'ap_pwd='+ap_pwd.value;
+    setup( 'set_ap', 'POST', data, 'ap_info', false, 'get_ap()', 1000 );
+}
+
+function reboot(){
+    setup( 'reboot', 'POST', '', 'reboot_info', true );
+}
+
+function get_name(){
+    var name_area = document.getElementById('device_name');
+    var request = new XMLHttpRequest();
+
+    request.onreadystatechange = function () {
+        if (request.readyState === 4) {
+            if (request.status === 200) {
+                result=JSON.parse(request.responseText);
+                name_area.innerText = result['name'];
+                return;
+            }
+        }
+    }
+    request.open('GET', 'get_name');
+    request.send();
+}
+
+
+var image_logo = document.getElementById('image_logo');
+var image_wifi = document.getElementById('image_wifi');
+var image_mqtt = document.getElementById('image_mqtt');
+var image_ap = document.getElementById('image_ap');
+
+window.setTimeout("get_name()",1000);
+window.setTimeout("get_wifi()",1500);
+window.setTimeout("get_ap()",2000);
+window.setTimeout("get_mqtt()",2500);
+
+window.setTimeout('image_logo.src ="pili_logo.png"',3000);
+window.setTimeout('image_wifi.src ="icon_wifi.jpg"',3500);
+window.setTimeout('image_mqtt.src ="icon_mqtt.png"',6000);
+window.setTimeout('image_ap.src ="icon_ap.jpg"',6500);
+
+window.setTimeout('window.document.body.style.backgroundImage = "url(config_background.png)"',7000);
+
+</script>
+</html>
