@@ -1,7 +1,9 @@
 # cover-motor
-## 因为使用的是ESPhome直接去烧录的，所以没有自己编程。这个部分可以参考ESPhome的页面就可以进行操作
+## 如果使用的是ESPhome直接去烧录的，就不需要没有自己编程。
+## 这个部分可以参考ESPhome的页面就可以进行操作
 https://esphome.io/cookbook/dual-r2-cover.html
-
+## 或者使用该git地址下的python文件，写入到刷好了micropython中的sonoff双路继电器。
+## 该部分较为复杂，建议使用上个方法。
 ## 步骤1
 
 购买对应的控制器。淘宝上寻找SONOFF双路控制器就可以了。
